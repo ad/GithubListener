@@ -63,11 +63,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSUserNotificationCent
 
                     var date:Date? = nil
 
-                    if let test = try! self.defaults.object(forKey: "GHL.\(repo.fullName).last_commit") {
-                        date = test as! Date
+                    if let test = self.defaults.object(forKey: "GHL.\(repo.fullName).last_commit") {
+                        date = test as? Date
                         
                         if repo.pushedAt <= date! {
-                            print(repo.pushedAt, "<=", date)
+                            print(repo.pushedAt, "<=", "\(date!)")
                             continue
                         }
                     }
@@ -101,6 +101,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSUserNotificationCent
                             print("commits failure: \(error.localizedDescription)")
                         }
                     }
+                    usleep(1000000)
                 }
             case .failure(let error):
                 print("repos failure: \(error.localizedDescription)")
