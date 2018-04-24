@@ -61,10 +61,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSUserNotificationCent
                 for repo in repos {
 //                    let fileName = self.getDocumentsDirectory().appendingPathComponent(repo.fullName).appendingPathExtension("json")
 
-//                    let date:String? = nil
-                    let date:Date = try! self.defaults.object(forKey: "GHL.\(repo.fullName).last_commit") as! Date
+                    var date:Date? = nil
 
-                    self.getCommits(for: repo.fullName, date: "\(date)") { (result) in
+                    if let test = try! self.defaults.object(forKey: "GHL.\(repo.fullName).last_commit") {
+                        date = test as! Date
+                    }
+
+                    self.getCommits(for: repo.fullName, date: date) { (result) in
                         switch result {
                         case .success(let commits):
 //                            repo.commits = commits
@@ -77,15 +80,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSUserNotificationCent
 //                            } catch {
 //                                print("Couldn't write file \(fileName)")
 //                            }
-                            
-                            let newDate:Date = (commits.first?.description.author.date)!
-                            self.defaults.set(newDate, forKey: "GHL.\(repo.fullName).last_commit")
-                            self.defaults.synchronize()
-                            
-                            for commit in commits.reversed() {
-                                let testDate:Date = commit.description.author.date
-                                if (date != nil && date != testDate) {
-                                    self.showNotification(title: "\(commit.author.login) commited to \(repo.name)", subtitle: commit.description.message, image: commit.author.avatarUrl)
+                            if commits.count > 0 {
+                                let newDate:Date = (commits.first?.description.author.date)!
+                                self.defaults.set(newDate, forKey: "GHL.\(repo.fullName).last_commit")
+                                self.defaults.synchronize()
+                                
+                                for commit in commits.reversed() {
+                                    let testDate:Date = commit.description.author.date
+                                    if (date != nil && date != testDate) {
+                                        self.showNotification(title: "\(commit.author.login) commited to \(repo.name)", subtitle: commit.description.message, image: commit.author.avatarUrl)
+                                    }
                                 }
                             }
                         case .failure(let error):
@@ -183,14 +187,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSUserNotificationCent
         task.resume()
     }
     
-    func getCommits(for repoName: String, date: String? = nil, completion: ((Result<[Commit]>) -> Void)?) {
+    func getCommits(for repoName: String, date: Date? = nil, completion: ((Result<[Commit]>) -> Void)?) {
         var urlComponents = URLComponents()
         urlComponents.scheme = "https"
         urlComponents.host = "api.github.com"
         urlComponents.path = "/repos/\(repoName)/commits"
         
         if (date != nil) {
-            let dateItem = URLQueryItem(name: "since", value: date!)
+            let dateItem = URLQueryItem(name: "since", value: "\(date!)")
             urlComponents.queryItems = [dateItem]
         }
         
