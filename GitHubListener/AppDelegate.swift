@@ -171,6 +171,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSUserNotificationCent
         let config = URLSessionConfiguration.default
         let session = URLSession(configuration: config)
         let task = session.dataTask(with: request) { (responseData, response, responseError) in
+//            print(String(data: responseData!, encoding: .utf8))
             DispatchQueue.main.async {
                 if let error = responseError {
                     completion?(.failure(error))
@@ -179,10 +180,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSUserNotificationCent
                     decoder.dateDecodingStrategy = .iso8601
                     
                     do {
-                        let repos = try decoder.decode([Repo].self, from: jsonData)
-                        completion?(.success(repos))
-                    } catch {
+                        let errorMessage = try decoder.decode(ErrorMessage.self, from: jsonData)
+                        let error = NSError(domain:"", code: 0, userInfo:[ NSLocalizedDescriptionKey: errorMessage.message])
+                        
                         completion?(.failure(error))
+                    } catch {
+                        do {
+                            let repos = try decoder.decode([Repo].self, from: jsonData)
+                            completion?(.success(repos))
+                        } catch {
+                            completion?(.failure(error))
+                        }
                     }
                 } else {
                     let error = NSError(domain: "", code: 0, userInfo: [NSLocalizedDescriptionKey : "Data was not retrieved from request"]) as Error
@@ -218,12 +226,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSUserNotificationCent
                 } else if let jsonData = responseData {
                     let decoder = JSONDecoder()
                     decoder.dateDecodingStrategy = .iso8601
-                    
+
                     do {
-                        let commits = try decoder.decode([Commit].self, from: jsonData)
-                        completion?(.success(commits))
-                    } catch {
+                        let errorMessage = try decoder.decode(ErrorMessage.self, from: jsonData)
+                        let error = NSError(domain:"", code: 0, userInfo:[ NSLocalizedDescriptionKey: errorMessage.message])
+                        
                         completion?(.failure(error))
+                    } catch {
+                        do {
+                            let commits = try decoder.decode([Commit].self, from: jsonData)
+                            completion?(.success(commits))
+                        } catch {
+                            completion?(.failure(error))
+                        }
                     }
                 } else {
                     let error = NSError(domain: "", code: 0, userInfo: [NSLocalizedDescriptionKey : "Data was not retrieved from request"]) as Error
@@ -418,5 +433,27 @@ struct Commit: Codable {
                 self.init(name: name, email: email, date: date)
             }
         }
+    }
+}
+
+struct ErrorMessage: Codable {
+    let message: String
+    let documentationUrl: String
+    
+    enum CodingKeys: String, CodingKey {
+        case message
+        case documentationUrl = "documentation_url"
+    }
+    
+    init(message: String, documentationUrl: String) {
+        self.message = message
+        self.documentationUrl = documentationUrl
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let message = try container.decode(String.self, forKey: .message)
+        let documentationUrl = try container.decode(String.self, forKey: .documentationUrl)
+        self.init(message: message, documentationUrl: documentationUrl)
     }
 }
