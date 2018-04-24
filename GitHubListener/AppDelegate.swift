@@ -44,6 +44,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSUserNotificationCent
 
     }
     
+    func userNotificationCenter(_ center: NSUserNotificationCenter, didActivate notification: NSUserNotification) {
+//    func userNotificationCenter(center: NSUserNotificationCenter, didActivateNotification notification: NSUserNotification) {
+        print("checking notification response", notification.userInfo!["url"])
+        if let url = URL(string: notification.userInfo!["url"] as! String)  {
+            NSWorkspace.shared.open(url)
+        }
+    }
+    
     func createMenu() {
         let menu = NSMenu()
         menu.addItem(withTitle: "Update \(self.username)", action: #selector(updateData), keyEquivalent: "r")
@@ -93,7 +101,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSUserNotificationCent
                                 for commit in commits.reversed() {
                                     let testDate:Date = commit.description.author.date
                                     if (date != nil && date != testDate) {
-                                        self.showNotification(title: "\(commit.author.login) commited to \(repo.name)", subtitle: commit.description.message, image: commit.author.avatarUrl)
+                                        self.showNotification(title: "\(commit.author.login) commited to \(repo.name)", subtitle: commit.description.message, image: commit.author.avatarUrl, url: commit.htmlUrl)
                                     }
                                 }
                             }
@@ -105,6 +113,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSUserNotificationCent
                 }
             case .failure(let error):
                 print("repos failure: \(error.localizedDescription)")
+                self.showNotification(title: "repos failure", subtitle: "\(error.localizedDescription)")
             }
         }
     }
@@ -172,6 +181,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSUserNotificationCent
         let session = URLSession(configuration: config)
         let task = session.dataTask(with: request) { (responseData, response, responseError) in
 //            print(String(data: responseData!, encoding: .utf8))
+            print(response)
             DispatchQueue.main.async {
                 if let error = responseError {
                     completion?(.failure(error))
@@ -250,11 +260,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSUserNotificationCent
         task.resume()
     }
     
-    func showNotification(title: String, subtitle: String, image: String? = nil) -> Void {
+    func showNotification(title: String, subtitle: String, image: String? = nil, url: String? = nil) -> Void {
         let notification = NSUserNotification()
         notification.title = title
         notification.informativeText = subtitle
         notification.soundName = NSUserNotificationDefaultSoundName
+        if url != nil {
+            notification.userInfo = ["url": url!]
+        }
         if image != nil {
             notification.contentImage = NSImage(contentsOf: NSURL(string: image!)! as URL)
         }
