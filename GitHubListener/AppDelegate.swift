@@ -65,8 +65,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSUserNotificationCent
 
                     if let test = try! self.defaults.object(forKey: "GHL.\(repo.fullName).last_commit") {
                         date = test as! Date
+                        
+                        if repo.pushedAt <= date! {
+                            print(repo.pushedAt, "<=", date)
+                            continue
+                        }
                     }
-
+                    
                     self.getCommits(for: repo.fullName, date: date) { (result) in
                         switch result {
                         case .success(let commits):
@@ -170,6 +175,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSUserNotificationCent
                     completion?(.failure(error))
                 } else if let jsonData = responseData {
                     let decoder = JSONDecoder()
+                    decoder.dateDecodingStrategy = .iso8601
                     
                     do {
                         let repos = try decoder.decode([Repo].self, from: jsonData)
@@ -253,6 +259,7 @@ struct Repo: Codable {
     let id: Int
     let name: String
     let fullName: String
+    let pushedAt: Date
 //    let description: String
 //    let watchers: Int
 //    let forks: Int
@@ -264,6 +271,7 @@ struct Repo: Codable {
         case id = "id"
         case name
         case fullName = "full_name"
+        case pushedAt = "pushed_at"
 //        case description
 //        case watchers
 //        case forks
@@ -272,10 +280,11 @@ struct Repo: Codable {
 //        case updatedAt = "updated_at"
     }
     
-    init(id: Int, name: String, fullName: String/*, description: String, watchers: Int, forks: Int, openIssues: Int*/ /*createdAt: Date, updatedAt: Date,*/) {
+    init(id: Int, name: String, fullName: String, pushedAt: Date/*, description: String, watchers: Int, forks: Int, openIssues: Int*/ /*createdAt: Date, updatedAt: Date,*/) {
         self.id = id
         self.name = name
         self.fullName = fullName
+        self.pushedAt = pushedAt
 //        self.description = description
 //        self.watchers = watchers
 //        self.forks = forks
@@ -289,6 +298,7 @@ struct Repo: Codable {
         let id = try container.decode(Int.self, forKey: .id)
         let name = try container.decode(String.self, forKey: .name)
         let fullName = try container.decode(String.self, forKey: .fullName)
+        let pushedAt = try container.decode(Date.self, forKey: .pushedAt)
 //        let description = try container.decode(String.self, forKey: .description)
 //        let watchers = try container.decode(Int.self, forKey: .watchers)
 //        let forks = try container.decode(Int.self, forKey: .forks)
@@ -296,7 +306,7 @@ struct Repo: Codable {
 //        let createdAt = try container.decode(Date.self, forKey: .createdAt)
 //        let updatedAt = try container.decode(Date.self, forKey: .updatedAt)
 
-        self.init(id: id, name: name, fullName: fullName/*, description: description ?? "", watchers: watchers, forks: forks, openIssues: openIssues*/ /*createdAt: createdAt, updatedAt: updatedAt,*/)
+        self.init(id: id, name: name, fullName: fullName, pushedAt: pushedAt/*, description: description ?? "", watchers: watchers, forks: forks, openIssues: openIssues*/ /*createdAt: createdAt, updatedAt: updatedAt,*/)
     }
 }
 
