@@ -46,7 +46,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSUserNotificationCent
     
     func createMenu() {
         let menu = NSMenu()
-        menu.addItem(withTitle: "Update", action: #selector(updateData), keyEquivalent: "r")
+        menu.addItem(withTitle: "Update \(self.username)", action: #selector(updateData), keyEquivalent: "r")
         menu.addItem(NSMenuItem.separator())
         menu.addItem(withTitle: "Quit", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         statusItem.menu = menu
