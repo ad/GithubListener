@@ -83,7 +83,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSUserNotificationCent
                         if repo.pushedAt <= date! {
                             continue
                         }
+                    } else {
+                        self.defaults.set(repo.pushedAt, forKey: "GHL.\(repo.fullName).last_commit")
+                        self.defaults.synchronize()
+                        continue
                     }
+                    
+//                    self.defaults.set(nil, forKey: "GHL.\(repo.fullName).last_commit")
+//                    self.defaults.synchronize()
 
                     self.getCommits(for: repo.fullName, date: date) { (result) in
                         switch result {
