@@ -7,8 +7,15 @@
 //
 
 import Cocoa
+import WebKit
 
-let delegate = AppDelegate()
+let app = NSApplication.shared
+let delegate = AppDelegate(app: app)
+app.delegate = delegate
 NSApplication.shared.delegate = delegate
 
 let ret = NSApplicationMain(CommandLine.argc, CommandLine.unsafeArgv)
+
+app.setActivationPolicy(.regular)
+atexit_b { app.setActivationPolicy(.prohibited); return }
+app.run()

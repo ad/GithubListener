@@ -8,6 +8,7 @@
 
 import Cocoa
 import Foundation
+import WebKit
 
 final class AppDelegate: NSObject, NSApplicationDelegate, NSUserNotificationCenterDelegate {
     var statusItem : NSStatusItem!
@@ -18,8 +19,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSUserNotificationCent
 
     let username = "ad"
     let interval = 120
+    
+    let clientId = "88a135874dd3d8db2cc5"
+    let clientSecret = "cf3732358810336da79359b1d90810474034765e"
 
     private var timer: Timer!
+    
+    let app: NSApplication
+    let controller: NSWindowController
+    
+    init(app: NSApplication) {
+        self.app = app
+        self.controller = NiblessWindowController()
+    }
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
 
@@ -41,10 +53,28 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSUserNotificationCent
         nc.delegate = self
 
         nc.removeAllDeliveredNotifications()
+        
+        controller.showWindow(nil)
+        app.activate(ignoringOtherApps: true)
+        
+//        let webview = WebView()
 
-        timer = Timer.scheduledTimer(timeInterval: TimeInterval(self.interval), target: self, selector: #selector(updateData), userInfo: nil, repeats: true)
-
-        updateData()
+//        timer = Timer.scheduledTimer(timeInterval: TimeInterval(self.interval), target: self, selector: #selector(updateData), userInfo: nil, repeats: true)
+//
+//        updateData()
+        
+//        newWindow = NSWindow(contentRect: NSMakeRect(10, 10, 300, 300), styleMask: .resizable, backing: .buffered, defer: false)
+        
+//        controller = SignInViewController()
+//        controller = NiblessWindowController()
+//        let content = controller.window?.contentView! as NSView
+//        let view = controller!.view
+//        controller?.showWindow(nil)
+//        NSApplication.shared.activate(ignoringOtherApps: true)
+//    }
+//        content.addSubview(webview)
+        
+//        newWindow!.makeKeyAndOrderFront(nil)
     }
 
     func applicationWillTerminate(_ aNotification: Notification) {
