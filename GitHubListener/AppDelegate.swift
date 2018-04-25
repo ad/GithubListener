@@ -17,6 +17,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSUserNotificationCent
     var repos = [Repo]()
     
     let username = "ad"
+    let interval = 120
     
     private var timer: Timer!
     
@@ -35,7 +36,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSUserNotificationCent
         
         nc.removeAllDeliveredNotifications()
         
-        timer = Timer.scheduledTimer(timeInterval: 60, target: self, selector: #selector(updateData), userInfo: nil, repeats: true)
+        timer = Timer.scheduledTimer(timeInterval: TimeInterval(self.interval), target: self, selector: #selector(updateData), userInfo: nil, repeats: true)
         
         updateData()
     }
@@ -46,7 +47,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSUserNotificationCent
     
     func userNotificationCenter(_ center: NSUserNotificationCenter, didActivate notification: NSUserNotification) {
 //    func userNotificationCenter(center: NSUserNotificationCenter, didActivateNotification notification: NSUserNotification) {
-        print("checking notification response", notification.userInfo!["url"])
         if let url = URL(string: notification.userInfo!["url"] as! String)  {
             NSWorkspace.shared.open(url)
         }
@@ -75,7 +75,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSUserNotificationCent
                         date = test as? Date
                         
                         if repo.pushedAt <= date! {
-                            print(repo.pushedAt, "<=", "\(date!)")
                             continue
                         }
                     }
@@ -113,7 +112,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSUserNotificationCent
                 }
             case .failure(let error):
                 print("repos failure: \(error.localizedDescription)")
-                self.showNotification(title: "repos failure", subtitle: "\(error.localizedDescription)")
+//                self.showNotification(title: "repos failure", subtitle: "\(error.localizedDescription)")
             }
         }
     }
@@ -174,42 +173,48 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSUserNotificationCent
         urlComponents.host = "api.github.com"
         urlComponents.path = "/users/\(userName)/subscriptions"
         guard let url = urlComponents.url else { fatalError("Could not create URL from components") }
-        var request = URLRequest(url: url)
-        request.httpMethod = "GET"
         
-        let config = URLSessionConfiguration.default
-        let session = URLSession(configuration: config)
-        let task = session.dataTask(with: request) { (responseData, response, responseError) in
-//            print(String(data: responseData!, encoding: .utf8))
-            print(response)
-            DispatchQueue.main.async {
-                if let error = responseError {
-                    completion?(.failure(error))
-                } else if let jsonData = responseData {
-                    let decoder = JSONDecoder()
-                    decoder.dateDecodingStrategy = .iso8601
-                    
-                    do {
-                        let errorMessage = try decoder.decode(ErrorMessage.self, from: jsonData)
-                        let error = NSError(domain:"", code: 0, userInfo:[ NSLocalizedDescriptionKey: errorMessage.message])
-                        
-                        completion?(.failure(error))
-                    } catch {
-                        do {
-                            let repos = try decoder.decode([Repo].self, from: jsonData)
-                            completion?(.success(repos))
-                        } catch {
+        self.checkStatus(url: url, completion: { (isModified) -> () in
+            if !isModified {
+                completion?(.success(self.repos))
+            } else {
+                var request = URLRequest(url: url)
+                
+                request.httpMethod = "GET"
+                
+                let config = URLSessionConfiguration.default
+                let session = URLSession(configuration: config)
+                let task = session.dataTask(with: request) { (responseData, response, responseError) in
+//                    print(String(data: responseData!, encoding: .utf8))
+                    DispatchQueue.main.async {
+                        if let error = responseError {
+                            completion?(.failure(error))
+                        } else if let jsonData = responseData {
+                            let decoder = JSONDecoder()
+                            decoder.dateDecodingStrategy = .iso8601
+                            
+                            do {
+                                let errorMessage = try decoder.decode(ErrorMessage.self, from: jsonData)
+                                let error = NSError(domain:"", code: 0, userInfo:[ NSLocalizedDescriptionKey: errorMessage.message])
+                                
+                                completion?(.failure(error))
+                            } catch {
+                                do {
+                                    let repos = try decoder.decode([Repo].self, from: jsonData)
+                                    completion?(.success(repos))
+                                } catch {
+                                    completion?(.failure(error))
+                                }
+                            }
+                        } else {
+                            let error = NSError(domain: "", code: 0, userInfo: [NSLocalizedDescriptionKey : "Data was not retrieved from request"]) as Error
                             completion?(.failure(error))
                         }
                     }
-                } else {
-                    let error = NSError(domain: "", code: 0, userInfo: [NSLocalizedDescriptionKey : "Data was not retrieved from request"]) as Error
-                    completion?(.failure(error))
                 }
+                task.resume()
             }
-        }
-        
-        task.resume()
+        })
     }
     
     func getCommits(for repoName: String, date: Date? = nil, completion: ((Result<[Commit]>) -> Void)?) {
@@ -224,38 +229,80 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSUserNotificationCent
         }
         
         guard let url = urlComponents.url else { fatalError("Could not create URL from components") }
-        var request = URLRequest(url: url)
-        request.httpMethod = "GET"
         
-        let config = URLSessionConfiguration.default
-        let session = URLSession(configuration: config)
-        let task = session.dataTask(with: request) { (responseData, response, responseError) in
-            DispatchQueue.main.async {
-                if let error = responseError {
-                    completion?(.failure(error))
-                } else if let jsonData = responseData {
-                    let decoder = JSONDecoder()
-                    decoder.dateDecodingStrategy = .iso8601
-
-                    do {
-                        let errorMessage = try decoder.decode(ErrorMessage.self, from: jsonData)
-                        let error = NSError(domain:"", code: 0, userInfo:[ NSLocalizedDescriptionKey: errorMessage.message])
-                        
-                        completion?(.failure(error))
-                    } catch {
-                        do {
-                            let commits = try decoder.decode([Commit].self, from: jsonData)
-                            completion?(.success(commits))
-                        } catch {
+        self.checkStatus(url: url, completion: { (isModified) -> () in
+            if !isModified {
+                completion?(.success([] as [Commit]))
+            } else {
+                var request = URLRequest(url: url)
+                request.httpMethod = "GET"
+                
+                let config = URLSessionConfiguration.default
+                let session = URLSession(configuration: config)
+                let task = session.dataTask(with: request) { (responseData, response, responseError) in
+                    DispatchQueue.main.async {
+                        if let error = responseError {
+                            completion?(.failure(error))
+                        } else if let jsonData = responseData {
+                            let decoder = JSONDecoder()
+                            decoder.dateDecodingStrategy = .iso8601
+                            
+                            do {
+                                let errorMessage = try decoder.decode(ErrorMessage.self, from: jsonData)
+                                let error = NSError(domain:"", code: 0, userInfo:[ NSLocalizedDescriptionKey: errorMessage.message])
+                                
+                                completion?(.failure(error))
+                            } catch {
+                                do {
+                                    let commits = try decoder.decode([Commit].self, from: jsonData)
+                                    completion?(.success(commits))
+                                } catch {
+                                    completion?(.failure(error))
+                                }
+                            }
+                        } else {
+                            let error = NSError(domain: "", code: 0, userInfo: [NSLocalizedDescriptionKey : "Data was not retrieved from request"]) as Error
                             completion?(.failure(error))
                         }
                     }
-                } else {
-                    let error = NSError(domain: "", code: 0, userInfo: [NSLocalizedDescriptionKey : "Data was not retrieved from request"]) as Error
-                    completion?(.failure(error))
+                }
+                task.resume()
+            }
+        })
+    }
+    
+    func checkStatus(url:URL, completion:((_ isModified:Bool) -> ())?) {
+        let request = NSMutableURLRequest(url: url)
+        request.httpMethod = "HEAD"
+        let config = URLSessionConfiguration.default
+        let session = URLSession(configuration: config)
+        
+        var isModified = true
+        
+        let task = session.dataTask(with: request as URLRequest, completionHandler: { [weak self] data, response, error -> Void in
+    
+            if let httpResp: HTTPURLResponse = response as? HTTPURLResponse {
+                let status = httpResp.allHeaderFields["Status"] as? String
+                let xRateLimitRemaining = httpResp.allHeaderFields["X-RateLimit-Remaining"] as? String
+                
+                if (xRateLimitRemaining != nil && Int(xRateLimitRemaining!)! <= 0) {
+                    isModified = false
+                    print(url, "\(status!)", "ratelimit", "\(xRateLimitRemaining!)")
+                } else if status != nil {
+                    isModified = status == "200 OK"
+
+                    if isModified {
+                        print(url, "\(status!)", "ratelimit", "\(xRateLimitRemaining!)")
+                    }
                 }
             }
-        }
+    
+            if completion != nil {
+                DispatchQueue.main.async {
+                    completion!(isModified)
+                }
+            }
+        })
         
         task.resume()
     }
