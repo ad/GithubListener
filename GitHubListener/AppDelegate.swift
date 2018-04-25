@@ -107,7 +107,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSUserNotificationCent
                                 for commit in commits.reversed() {
                                     let testDate:Date = commit.description.author.date
                                     if (date != nil && date != testDate) {
-                                        self.showNotification(title: "\(commit.author.login) commited to \(repo.name)", subtitle: commit.description.message, image: commit.author.avatarUrl, url: commit.htmlUrl)
+                                        self.showNotification(title: "\(repo.name)", subtitle: "\(commit.author.login) added commit", informativeText:  commit.description.message, image: commit.author.avatarUrl, url: commit.htmlUrl)
                                     }
                                 }
                             }
@@ -314,10 +314,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSUserNotificationCent
         task.resume()
     }
     
-    func showNotification(title: String, subtitle: String, image: String? = nil, url: String? = nil) -> Void {
+    func showNotification(title: String, subtitle: String, informativeText: String, image: String? = nil, url: String? = nil) -> Void {
         let notification = NSUserNotification()
         notification.title = title
-        notification.informativeText = subtitle
+        notification.subtitle = subtitle
+        notification.informativeText = informativeText
         notification.soundName = NSUserNotificationDefaultSoundName
         if url != nil {
             notification.userInfo = ["url": url!]
