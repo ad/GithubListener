@@ -25,8 +25,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSUserNotificationCent
 
         let statusItem : NSStatusItem = {
             let item =  NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-            item.title = "GHL"
             self.statusItem = item
+            self.statusItem.highlightMode = true
+            self.statusItem.title = nil
+            
+            let icon = #imageLiteral(resourceName: "StatusImage")
+            icon.size = NSSize(width: 21, height: 21)
+            icon.isTemplate = true
+            
+            self.statusItem.image = icon
             return item
         }()
         createMenu()
