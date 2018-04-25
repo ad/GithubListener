@@ -12,53 +12,52 @@ import Foundation
 final class AppDelegate: NSObject, NSApplicationDelegate, NSUserNotificationCenterDelegate {
     var statusItem : NSStatusItem!
     let defaults = UserDefaults.standard
-    
+
     var nc: NSUserNotificationCenter!
     var repos = [Repo]()
-    
+
     let username = "ad"
     let interval = 120
-    
+
     private var timer: Timer!
-    
+
     func applicationDidFinishLaunching(_ aNotification: Notification) {
 
-        let statusItem : NSStatusItem = {
-            let item =  NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-            self.statusItem = item
-            self.statusItem.highlightMode = true
-            self.statusItem.title = nil
-            
-            let icon = #imageLiteral(resourceName: "StatusImage")
-            icon.size = NSSize(width: 21, height: 21)
-            icon.isTemplate = true
-            
-            self.statusItem.image = icon
-            return item
-        }()
+
+        let item =  NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+        self.statusItem = item
+        self.statusItem.highlightMode = true
+        self.statusItem.title = nil
+
+        let icon = #imageLiteral(resourceName: "StatusImage")
+        icon.size = NSSize(width: 21, height: 21)
+        icon.isTemplate = true
+
+        self.statusItem.image = icon
+
         createMenu()
-        
+
         self.nc = NSUserNotificationCenter.default
         nc.delegate = self
-        
+
         nc.removeAllDeliveredNotifications()
-        
+
         timer = Timer.scheduledTimer(timeInterval: TimeInterval(self.interval), target: self, selector: #selector(updateData), userInfo: nil, repeats: true)
-        
+
         updateData()
     }
 
     func applicationWillTerminate(_ aNotification: Notification) {
 
     }
-    
+
     func userNotificationCenter(_ center: NSUserNotificationCenter, didActivate notification: NSUserNotification) {
 //    func userNotificationCenter(center: NSUserNotificationCenter, didActivateNotification notification: NSUserNotification) {
         if let url = URL(string: notification.userInfo!["url"] as! String)  {
             NSWorkspace.shared.open(url)
         }
     }
-    
+
     func createMenu() {
         let menu = NSMenu()
         menu.addItem(withTitle: "Update \(self.username)", action: #selector(updateData), keyEquivalent: "r")
@@ -66,7 +65,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSUserNotificationCent
         menu.addItem(withTitle: "Quit", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         statusItem.menu = menu
     }
-    
+
     @objc func updateData() {
 
         self.getRepos(for: self.username) { (result) in
@@ -80,12 +79,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSUserNotificationCent
 
                     if let test = self.defaults.object(forKey: "GHL.\(repo.fullName).last_commit") {
                         date = test as? Date
-                        
+
                         if repo.pushedAt <= date! {
                             continue
                         }
                     }
-                    
+
                     self.getCommits(for: repo.fullName, date: date) { (result) in
                         switch result {
                         case .success(let commits):
@@ -103,7 +102,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSUserNotificationCent
                                 let newDate:Date = (commits.first?.description.author.date)!
                                 self.defaults.set(newDate, forKey: "GHL.\(repo.fullName).last_commit")
                                 self.defaults.synchronize()
-                                
+
                                 for commit in commits.reversed() {
                                     let testDate:Date = commit.description.author.date
                                     if (date != nil && date != testDate) {
@@ -123,7 +122,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSUserNotificationCent
             }
         }
     }
-    
+
 //    func getDocumentsDirectory() -> URL {
 //        let paths = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)
 //        return paths[0]
@@ -173,22 +172,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSUserNotificationCent
 //            print(error.localizedDescription)
 //        }
 //    }
-    
+
     func getRepos(for userName: String, completion: ((Result<[Repo]>) -> Void)?) {
         var urlComponents = URLComponents()
         urlComponents.scheme = "https"
         urlComponents.host = "api.github.com"
         urlComponents.path = "/users/\(userName)/subscriptions"
         guard let url = urlComponents.url else { fatalError("Could not create URL from components") }
-        
+
         self.checkStatus(url: url, completion: { (isModified) -> () in
             if !isModified {
                 completion?(.success(self.repos))
             } else {
                 var request = URLRequest(url: url)
-                
+
                 request.httpMethod = "GET"
-                
+
                 let config = URLSessionConfiguration.default
                 let session = URLSession(configuration: config)
                 let task = session.dataTask(with: request) { (responseData, response, responseError) in
@@ -199,11 +198,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSUserNotificationCent
                         } else if let jsonData = responseData {
                             let decoder = JSONDecoder()
                             decoder.dateDecodingStrategy = .iso8601
-                            
+
                             do {
                                 let errorMessage = try decoder.decode(ErrorMessage.self, from: jsonData)
                                 let error = NSError(domain:"", code: 0, userInfo:[ NSLocalizedDescriptionKey: errorMessage.message])
-                                
+
                                 completion?(.failure(error))
                             } catch {
                                 do {
@@ -223,27 +222,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSUserNotificationCent
             }
         })
     }
-    
+
     func getCommits(for repoName: String, date: Date? = nil, completion: ((Result<[Commit]>) -> Void)?) {
         var urlComponents = URLComponents()
         urlComponents.scheme = "https"
         urlComponents.host = "api.github.com"
         urlComponents.path = "/repos/\(repoName)/commits"
-        
+
         if (date != nil) {
             let dateItem = URLQueryItem(name: "since", value: "\(date!)")
             urlComponents.queryItems = [dateItem]
         }
-        
+
         guard let url = urlComponents.url else { fatalError("Could not create URL from components") }
-        
+
         self.checkStatus(url: url, completion: { (isModified) -> () in
             if !isModified {
                 completion?(.success([] as [Commit]))
             } else {
                 var request = URLRequest(url: url)
                 request.httpMethod = "GET"
-                
+
                 let config = URLSessionConfiguration.default
                 let session = URLSession(configuration: config)
                 let task = session.dataTask(with: request) { (responseData, response, responseError) in
@@ -253,11 +252,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSUserNotificationCent
                         } else if let jsonData = responseData {
                             let decoder = JSONDecoder()
                             decoder.dateDecodingStrategy = .iso8601
-                            
+
                             do {
                                 let errorMessage = try decoder.decode(ErrorMessage.self, from: jsonData)
                                 let error = NSError(domain:"", code: 0, userInfo:[ NSLocalizedDescriptionKey: errorMessage.message])
-                                
+
                                 completion?(.failure(error))
                             } catch {
                                 do {
@@ -277,21 +276,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSUserNotificationCent
             }
         })
     }
-    
+
     func checkStatus(url:URL, completion:((_ isModified:Bool) -> ())?) {
         let request = NSMutableURLRequest(url: url)
         request.httpMethod = "HEAD"
         let config = URLSessionConfiguration.default
         let session = URLSession(configuration: config)
-        
+
         var isModified = true
-        
+
         let task = session.dataTask(with: request as URLRequest, completionHandler: { [weak self] data, response, error -> Void in
-    
+
             if let httpResp: HTTPURLResponse = response as? HTTPURLResponse {
                 let status = httpResp.allHeaderFields["Status"] as? String
                 let xRateLimitRemaining = httpResp.allHeaderFields["X-RateLimit-Remaining"] as? String
-                
+
                 if (xRateLimitRemaining != nil && Int(xRateLimitRemaining!)! <= 0) {
                     isModified = false
                     print(url, "\(status!)", "ratelimit", "\(xRateLimitRemaining!)")
@@ -303,17 +302,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSUserNotificationCent
                     }
                 }
             }
-    
+
             if completion != nil {
                 DispatchQueue.main.async {
                     completion!(isModified)
                 }
             }
         })
-        
+
         task.resume()
     }
-    
+
     func showNotification(title: String, subtitle: String, informativeText: String, image: String? = nil, url: String? = nil) -> Void {
         let notification = NSUserNotification()
         notification.title = title
@@ -328,7 +327,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSUserNotificationCent
         }
         nc.deliver(notification)
     }
-    
+
     func userNotificationCenter(_ center: NSUserNotificationCenter, shouldPresent notification: NSUserNotification) -> Bool {
         return true
     }
@@ -350,7 +349,7 @@ struct Repo: Codable {
 //    let openIssues: Int
 //    let createdAt: Date
 //    let updatedAt: Date
-    
+
     enum CodingKeys: String, CodingKey {
         case id = "id"
         case name
@@ -363,7 +362,7 @@ struct Repo: Codable {
 //        case createdAt = "created_at"
 //        case updatedAt = "updated_at"
     }
-    
+
     init(id: Int, name: String, fullName: String, pushedAt: Date/*, description: String, watchers: Int, forks: Int, openIssues: Int*/ /*createdAt: Date, updatedAt: Date,*/) {
         self.id = id
         self.name = name
@@ -376,7 +375,7 @@ struct Repo: Codable {
 //        self.createdAt = createdAt
 //        self.updatedAt = updatedAt
     }
-    
+
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         let id = try container.decode(Int.self, forKey: .id)
@@ -399,21 +398,21 @@ struct Commit: Codable {
     let htmlUrl: String
     let author: User
     let description: CommitDescription
-    
+
     enum CodingKeys: String, CodingKey {
         case id = "sha"
         case htmlUrl = "html_url"
         case author
         case description = "commit"
     }
-    
+
     init(id: String, htmlUrl: String, author: User, description: CommitDescription) {
         self.id = id
         self.htmlUrl = htmlUrl
         self.author = author
         self.description = description
     }
-    
+
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         let id = try container.decode(String.self, forKey: .id)
@@ -422,25 +421,25 @@ struct Commit: Codable {
         let description = try container.decode(CommitDescription.self, forKey: .description)
         self.init(id: id, htmlUrl: htmlUrl, author: author, description: description)
     }
-    
+
 
     struct User: Codable {
         let id: Int
         let login: String
         let avatarUrl: String
-        
+
         enum CodingKeys: String, CodingKey {
             case id
             case login
             case avatarUrl = "avatar_url"
         }
-        
+
         init(id: Int, login: String, avatarUrl: String) {
             self.id = id
             self.login = login
             self.avatarUrl = avatarUrl
         }
-        
+
         init(from decoder: Decoder) throws {
             let container = try decoder.container(keyedBy: CodingKeys.self)
             let id = try container.decode(Int.self, forKey: .id)
@@ -449,25 +448,25 @@ struct Commit: Codable {
             self.init(id: id, login: login, avatarUrl: avatarUrl)
         }
     }
-    
-    
+
+
     struct CommitDescription: Codable {
         let message: String
         let commentCount: Int
         let author: CommitAuthor
-        
+
         enum CodingKeys: String, CodingKey {
             case message
             case commentCount = "comment_count"
             case author
         }
-        
+
         init(message: String, commentCount: Int, author: CommitAuthor) {
             self.message = message
             self.commentCount = commentCount
             self.author = author
         }
-        
+
         init(from decoder: Decoder) throws {
             let container = try decoder.container(keyedBy: CodingKeys.self)
             let message = try container.decode(String.self, forKey: .message)
@@ -475,24 +474,24 @@ struct Commit: Codable {
             let author = try container.decode(CommitAuthor.self, forKey: .author)
             self.init(message: message, commentCount: commentCount, author: author)
         }
-        
+
         struct CommitAuthor: Codable {
             let name: String
             let email: String
             let date: Date
-            
+
             enum CodingKeys: String, CodingKey {
                 case name
                 case email
                 case date
             }
-            
+
             init(name: String, email: String, date: Date) {
                 self.name = name
                 self.email = email
                 self.date = date
             }
-            
+
             init(from decoder: Decoder) throws {
                 let container = try decoder.container(keyedBy: CodingKeys.self)
                 let name = try container.decode(String.self, forKey: .name)
@@ -507,17 +506,17 @@ struct Commit: Codable {
 struct ErrorMessage: Codable {
     let message: String
     let documentationUrl: String
-    
+
     enum CodingKeys: String, CodingKey {
         case message
         case documentationUrl = "documentation_url"
     }
-    
+
     init(message: String, documentationUrl: String) {
         self.message = message
         self.documentationUrl = documentationUrl
     }
-    
+
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         let message = try container.decode(String.self, forKey: .message)
