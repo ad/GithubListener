@@ -11,7 +11,3 @@ Will show notification to you about new commits from "Watched repositories" (htt
 
 
 ![This is alpha!](https://discourse-cdn-sjc1.com/business6/uploads/highfidelity/3764/8618cb7af8406f6a.jpg)
-
-Username should be changed in AppDelegate.swift at that moment.
-
-Github anonymous API has rate limits (60 request per hour), if you have more than 60 watching repos you can't use this app :(
