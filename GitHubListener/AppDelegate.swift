@@ -17,7 +17,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSUserNotificationCent
     var nc: NSUserNotificationCenter!
     var repos = [Repo]()
 
-    let username = "ad"
+    var username = ""
+    var accessToken = ""
     let interval = 120
     
     let clientId = "88a135874dd3d8db2cc5"
@@ -26,16 +27,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSUserNotificationCent
     private var timer: Timer!
     
     let app: NSApplication
-    let controller: NSWindowController
+    var controller: NSWindowController!
     
     init(app: NSApplication) {
         self.app = app
-        self.controller = NiblessWindowController()
     }
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
-
-
         let item =  NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         self.statusItem = item
         self.statusItem.highlightMode = true
@@ -46,35 +44,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSUserNotificationCent
         icon.isTemplate = true
 
         self.statusItem.image = icon
-
-        createMenu()
-
+        
         self.nc = NSUserNotificationCenter.default
         nc.delegate = self
 
         nc.removeAllDeliveredNotifications()
         
-        controller.showWindow(nil)
-        app.activate(ignoringOtherApps: true)
-        
-//        let webview = WebView()
+        if let accessToken = self.defaults.string(forKey: "GHL.access_token") {
+            self.accessToken = accessToken
 
-//        timer = Timer.scheduledTimer(timeInterval: TimeInterval(self.interval), target: self, selector: #selector(updateData), userInfo: nil, repeats: true)
-//
-//        updateData()
-        
-//        newWindow = NSWindow(contentRect: NSMakeRect(10, 10, 300, 300), styleMask: .resizable, backing: .buffered, defer: false)
-        
-//        controller = SignInViewController()
-//        controller = NiblessWindowController()
-//        let content = controller.window?.contentView! as NSView
-//        let view = controller!.view
-//        controller?.showWindow(nil)
-//        NSApplication.shared.activate(ignoringOtherApps: true)
-//    }
-//        content.addSubview(webview)
-        
-//        newWindow!.makeKeyAndOrderFront(nil)
+            print("access_token read", accessToken)
+            if let username = self.defaults.string(forKey: "GHL.username") {
+                self.username = username
+                createTimer()
+                updateData()
+                createMenu()
+            }
+        } else {
+            controller = NiblessWindowController()
+            controller.showWindow(nil)
+            app.activate(ignoringOtherApps: true)
+        }
     }
 
     func applicationWillTerminate(_ aNotification: Notification) {
@@ -87,6 +77,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSUserNotificationCent
             NSWorkspace.shared.open(url)
         }
     }
+    
+    public func createTimer() {
+        timer = Timer.scheduledTimer(timeInterval: TimeInterval(self.interval), target: self, selector: #selector(updateData), userInfo: nil, repeats: true)
+    }
 
     func createMenu() {
         let menu = NSMenu()
@@ -96,7 +90,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSUserNotificationCent
         statusItem.menu = menu
     }
 
-    @objc func updateData() {
+    @objc public func updateData() {
 
         self.getRepos(for: self.username) { (result) in
             switch result {
@@ -224,6 +218,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSUserNotificationCent
                 var request = URLRequest(url: url)
 
                 request.httpMethod = "GET"
+                
+                request.addValue("application/json", forHTTPHeaderField: "Accept")
+                request.addValue("token \(self.accessToken)", forHTTPHeaderField: "Authorization")
 
                 let config = URLSessionConfiguration.default
                 let session = URLSession(configuration: config)
@@ -279,6 +276,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSUserNotificationCent
             } else {
                 var request = URLRequest(url: url)
                 request.httpMethod = "GET"
+                
+                request.addValue("application/json", forHTTPHeaderField: "Accept")
+                request.addValue("token \(self.accessToken)", forHTTPHeaderField: "Authorization")
 
                 let config = URLSessionConfiguration.default
                 let session = URLSession(configuration: config)
@@ -317,13 +317,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSUserNotificationCent
     func checkStatus(url:URL, completion:((_ isModified:Bool) -> ())?) {
         let request = NSMutableURLRequest(url: url)
         request.httpMethod = "HEAD"
+        
+        request.addValue("application/json", forHTTPHeaderField: "Accept")
+        request.addValue("token \(accessToken)", forHTTPHeaderField: "Authorization")
+        
         let config = URLSessionConfiguration.default
         let session = URLSession(configuration: config)
 
         var isModified = true
 
         let task = session.dataTask(with: request as URLRequest, completionHandler: { [weak self] data, response, error -> Void in
-
             if let httpResp: HTTPURLResponse = response as? HTTPURLResponse {
                 let status = httpResp.allHeaderFields["Status"] as? String
                 let xRateLimitRemaining = httpResp.allHeaderFields["X-RateLimit-Remaining"] as? String

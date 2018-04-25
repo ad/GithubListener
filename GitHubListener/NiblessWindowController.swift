@@ -78,7 +78,7 @@ class NiblessWindowController: NSWindowController, WKNavigationDelegate {
                             do {
                                 if let content = try JSONSerialization.jsonObject(with: data, options: []) as? [String: AnyObject] {
                                     if let accessToken = content["access_token"] as? String {
-                                        print("access_token", accessToken)
+                                        self.getUser(accessToken: accessToken)
                                         self.window?.close()
                                     }
                                 }
@@ -91,5 +91,42 @@ class NiblessWindowController: NSWindowController, WKNavigationDelegate {
             decisionHandler(WKNavigationActionPolicy.cancel)
         }
         decisionHandler(WKNavigationActionPolicy.allow)
+    }
+    
+    func getUser(accessToken: String) {
+        let urlString = "https://api.github.com/user"
+        if let url = NSURL(string: urlString) {
+            let req = NSMutableURLRequest(url: url as URL)
+            req.addValue("application/json", forHTTPHeaderField: "Accept")
+            req.addValue("token \(accessToken)", forHTTPHeaderField: "Authorization")
+            let task = URLSession.shared.dataTask(with: req as URLRequest) { data, response, error in
+                if let data = data {
+                    if let content = String(data: data, encoding: String.Encoding.utf8) {
+                        do {
+                            if let jsonResult = try JSONSerialization.jsonObject(with: data, options: JSONSerialization.ReadingOptions.mutableContainers) as? [String:Any] {
+                                if let login = jsonResult["login"] {
+                                    UserDefaults.standard.set(login, forKey: "GHL.username")
+                                    UserDefaults.standard.set(accessToken, forKey: "GHL.access_token")
+                                    UserDefaults.standard.synchronize()
+                                    
+                                    DispatchQueue.main.async() {
+                                        let appDelegate = NSApplication.shared.delegate as! AppDelegate
+                                        appDelegate.accessToken = accessToken
+                                        appDelegate.createTimer()
+                                        appDelegate.updateData()
+                                        appDelegate.createMenu()
+                                        
+//                                        print("access_token received", accessToken, "for user", login)
+                                    }
+                                }
+                            }
+                        } catch {
+                            print(error.localizedDescription)
+                        }
+                    }
+                }
+            }
+            task.resume()
+        }
     }
 }
