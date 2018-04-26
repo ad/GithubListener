@@ -49,7 +49,7 @@ class NiblessWindowController: NSWindowController, WKNavigationDelegate {
     func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
 
         if let url = navigationAction.request.url, url.host == "gl.apatin.ru" {
-            print(url)
+//            print(url)
             if let code = url.query?.components(separatedBy: "code=").last {
                 let urlString = "https://github.com/login/oauth/access_token"
                 if let tokenUrl = NSURL(string: urlString) {
@@ -68,7 +68,9 @@ class NiblessWindowController: NSWindowController, WKNavigationDelegate {
                             do {
                                 if let content = try JSONSerialization.jsonObject(with: data, options: []) as? [String: AnyObject] {
                                     if let accessToken = content["access_token"] as? String {
+//                                        print(accessToken)
                                         self.getUser(accessToken: accessToken)
+                                        self.window?.close()
                                     }
                                 }
                             } catch {}
@@ -77,8 +79,10 @@ class NiblessWindowController: NSWindowController, WKNavigationDelegate {
                     task.resume()
                     
                 }
+                decisionHandler(WKNavigationActionPolicy.cancel)
+            } else {
+                decisionHandler(WKNavigationActionPolicy.allow)
             }
-            decisionHandler(WKNavigationActionPolicy.cancel)
         } else {
             decisionHandler(WKNavigationActionPolicy.allow)
         }
@@ -96,16 +100,16 @@ class NiblessWindowController: NSWindowController, WKNavigationDelegate {
                     do {
                         if let jsonResult = try JSONSerialization.jsonObject(with: data, options: JSONSerialization.ReadingOptions.mutableContainers) as? [String:Any] {
                             if let login = jsonResult["login"] {
-                                UserDefaults.standard.set(login, forKey: "GHL.username")
-                                UserDefaults.standard.set(accessToken, forKey: "GHL.access_token")
-                                UserDefaults.standard.synchronize()
-                                
                                 DispatchQueue.main.async() {
+                                    UserDefaults.standard.set(login, forKey: "GHL.username")
+                                    UserDefaults.standard.set(accessToken, forKey: "GHL.access_token")
+                                    UserDefaults.standard.synchronize()
+
                                     let appDelegate = NSApplication.shared.delegate as! AppDelegate
                                     appDelegate.accessToken = accessToken
+                                    appDelegate.username = login as! String
                                     appDelegate.updateData()
                                     appDelegate.createMenu()
-                                    self.window?.close()
 //                                    print("access_token received", accessToken, "for user", login)
                                 }
                             }

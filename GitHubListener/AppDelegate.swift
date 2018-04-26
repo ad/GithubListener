@@ -20,9 +20,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSUserNotificationCent
     var username:String? = nil
     var accessToken:String? = nil
     let interval = 60
-    
-    let clientId = "88a135874dd3d8db2cc5"
-    let clientSecret = "cf3732358810336da79359b1d90810474034765e"
 
     private let activity = NSBackgroundActivityScheduler(identifier: "com.ad.GHL.updatecheck")
     
@@ -364,7 +361,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSUserNotificationCent
         request.httpMethod = "HEAD"
         
         request.addValue("application/json", forHTTPHeaderField: "Accept")
-        request.addValue("token \(accessToken!)", forHTTPHeaderField: "Authorization")
+        request.addValue("token \(self.accessToken!)", forHTTPHeaderField: "Authorization")
         
         let config = URLSessionConfiguration.default
         let session = URLSession(configuration: config)
