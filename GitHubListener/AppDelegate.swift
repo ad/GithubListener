@@ -24,7 +24,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSUserNotificationCent
     let clientId = "88a135874dd3d8db2cc5"
     let clientSecret = "cf3732358810336da79359b1d90810474034765e"
 
-    private var timer: Timer!
+    private let activity = NSBackgroundActivityScheduler(identifier: "com.ad.GHL.updatecheck")
     
     let app: NSApplication
     var controller: NSWindowController!
@@ -34,6 +34,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSUserNotificationCent
     }
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
+        activity.interval = TimeInterval(interval)
+        
         let item =  NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         self.statusItem = item
         self.statusItem.highlightMode = true
@@ -56,7 +58,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSUserNotificationCent
             print("access_token read", accessToken)
             if let username = self.defaults.string(forKey: "GHL.username") {
                 self.username = username
-                createTimer()
                 updateData()
                 createMenu()
             }
@@ -65,6 +66,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSUserNotificationCent
             controller.showWindow(nil)
             app.activate(ignoringOtherApps: true)
         }
+        
+        activity.repeats = true
+        activity.qualityOfService = .utility
+        activity.schedule { (completion: NSBackgroundActivityScheduler.CompletionHandler) in
+            self.updateData()
+            completion(NSBackgroundActivityScheduler.Result.finished)
+        }
     }
 
     func applicationWillTerminate(_ aNotification: Notification) {
@@ -72,14 +80,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSUserNotificationCent
     }
 
     func userNotificationCenter(_ center: NSUserNotificationCenter, didActivate notification: NSUserNotification) {
-//    func userNotificationCenter(center: NSUserNotificationCenter, didActivateNotification notification: NSUserNotification) {
         if let url = URL(string: notification.userInfo!["url"] as! String)  {
             NSWorkspace.shared.open(url)
         }
-    }
-    
-    public func createTimer() {
-        timer = Timer.scheduledTimer(timeInterval: TimeInterval(self.interval), target: self, selector: #selector(updateData), userInfo: nil, repeats: true)
     }
 
     func createMenu() {
@@ -101,10 +104,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSUserNotificationCent
     
 
     @objc public func logout() {
-        if timer != nil {
-            timer.invalidate()
-        }
-        timer = nil
         self.username = nil
         self.accessToken = nil
         
@@ -365,7 +364,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSUserNotificationCent
         request.httpMethod = "HEAD"
         
         request.addValue("application/json", forHTTPHeaderField: "Accept")
-        request.addValue("token \(accessToken)", forHTTPHeaderField: "Authorization")
+        request.addValue("token \(accessToken!)", forHTTPHeaderField: "Authorization")
         
         let config = URLSessionConfiguration.default
         let session = URLSession(configuration: config)

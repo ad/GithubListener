@@ -103,7 +103,6 @@ class NiblessWindowController: NSWindowController, WKNavigationDelegate {
                                 DispatchQueue.main.async() {
                                     let appDelegate = NSApplication.shared.delegate as! AppDelegate
                                     appDelegate.accessToken = accessToken
-                                    appDelegate.createTimer()
                                     appDelegate.updateData()
                                     appDelegate.createMenu()
                                     self.window?.close()
