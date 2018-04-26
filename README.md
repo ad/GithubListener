@@ -1,13 +1,13 @@
 <p align="center">
-    <img src="GitHubListener/Assets.xcassets/AppIcon.appiconset/128.png" width="128">
+    <img src="GitHubListener/Assets.xcassets/AppIcon.appiconset/128.png" width="128" alt="GithubListener><br/>
+    <img src="https://discourse-cdn-sjc1.com/business6/uploads/highfidelity/3764/8618cb7af8406f6a.jpg">
 </p>
 
 # GithubListener
+Did you ever wanted to get notifications about new commits in repositories that you watch?  
 
-Notifying about new commits from watched repos on github.
+GithubListener will show notifications about new commits to ["Watched repositories"](https://github.com/watching) . 
+<img src="notifyexample.png" width="400">
 
-Will show notification to you about new commits from "Watched repositories" (https://github.com/watching)
-
-
-
-![This is alpha!](https://discourse-cdn-sjc1.com/business6/uploads/highfidelity/3764/8618cb7af8406f6a.jpg)
+## OAuth
+To start getting notifications you need to grant access via Github OAuth, this is needed because of small ratelimit for unauthorized queries. You will be asked only once at first application start.
