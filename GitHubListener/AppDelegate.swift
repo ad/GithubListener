@@ -19,7 +19,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSUserNotificationCent
 
     var username:String? = nil
     var accessToken:String? = nil
-    let interval = 120
+    let interval = 60
     
     let clientId = "88a135874dd3d8db2cc5"
     let clientSecret = "cf3732358810336da79359b1d90810474034765e"
