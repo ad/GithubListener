@@ -17,8 +17,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSUserNotificationCent
     var nc: NSUserNotificationCenter!
     var repos = [Repo]()
 
-    var username = ""
-    var accessToken = ""
+    var username:String? = nil
+    var accessToken:String? = nil
     let interval = 120
     
     let clientId = "88a135874dd3d8db2cc5"
@@ -84,15 +84,61 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSUserNotificationCent
 
     func createMenu() {
         let menu = NSMenu()
-        menu.addItem(withTitle: "Update \(self.username)", action: #selector(updateData), keyEquivalent: "r")
-        menu.addItem(NSMenuItem.separator())
+        if (self.username != nil) {
+            menu.addItem(withTitle: "Update \(self.username!)", action: #selector(updateData), keyEquivalent: "r")
+            menu.addItem(NSMenuItem.separator())
+            
+            menu.addItem(withTitle: "Logout \(self.username!)", action: #selector(logout), keyEquivalent: "l")
+            menu.addItem(NSMenuItem.separator())
+        } else {
+            menu.addItem(withTitle: "Login", action: #selector(logout), keyEquivalent: "l")
+            menu.addItem(NSMenuItem.separator())
+        }
+        
         menu.addItem(withTitle: "Quit", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         statusItem.menu = menu
     }
+    
+
+    @objc public func logout() {
+        if timer != nil {
+            timer.invalidate()
+        }
+        timer = nil
+        self.username = nil
+        self.accessToken = nil
+        
+        UserDefaults.standard.removeObject(forKey: "GHL.username")
+        UserDefaults.standard.removeObject(forKey: "GHL.access_token")
+        UserDefaults.standard.synchronize()
+        
+        createMenu()
+        
+        removeCookies()
+        
+        if controller == nil {
+            controller = NiblessWindowController()
+        }
+        
+        controller.showWindow(nil)
+        app.activate(ignoringOtherApps: true)
+    }
+    
+    public func removeCookies() {
+//        let cookie = HTTPCookie.self
+        let cookieJar = HTTPCookieStorage.shared
+        
+        for cookie in cookieJar.cookies! {
+            cookieJar.deleteCookie(cookie)
+        }
+    }
 
     @objc public func updateData() {
+        if (self.username == nil || self.accessToken == nil) {
+            return
+        }
 
-        self.getRepos(for: self.username) { (result) in
+        self.getRepos(for: self.username!) { (result) in
             switch result {
             case .success(let repos):
                 self.repos = repos
@@ -220,7 +266,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSUserNotificationCent
                 request.httpMethod = "GET"
                 
                 request.addValue("application/json", forHTTPHeaderField: "Accept")
-                request.addValue("token \(self.accessToken)", forHTTPHeaderField: "Authorization")
+                request.addValue("token \(self.accessToken!)", forHTTPHeaderField: "Authorization")
 
                 let config = URLSessionConfiguration.default
                 let session = URLSession(configuration: config)
@@ -278,7 +324,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSUserNotificationCent
                 request.httpMethod = "GET"
                 
                 request.addValue("application/json", forHTTPHeaderField: "Accept")
-                request.addValue("token \(self.accessToken)", forHTTPHeaderField: "Authorization")
+                request.addValue("token \(self.accessToken!)", forHTTPHeaderField: "Authorization")
 
                 let config = URLSessionConfiguration.default
                 let session = URLSession(configuration: config)
