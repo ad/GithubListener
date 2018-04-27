@@ -1,6 +1,8 @@
+#!/bin/bash
+
 NAME='GitHubListener'
 
-rm -r Release 2>/dev/null
+rm -rf Release 2>/dev/null
 
 xcodebuild archive \
 	-scheme "$NAME" \
@@ -15,9 +17,10 @@ xcodebuild \
 cd Release
 rm -r App.xcarchive
 
-# Prerequisite: npm i -g create-dmg
-# create-dmg "${NAME}.app"
+sleep 5
 
-VERSION=`mdls -raw -name kMDItemVersion $NAME.app`
-echo $VERSION
-zip -r "${NAME}v${VERSION}.zip" "${NAME}.app"
+VER=`mdls -raw -name kMDItemVersion $NAME.app`
+
+ARCH_NAME="$NAME.v$VER.zip"
+zip -r $ARCH_NAME $NAME.app
+# echo "$ARCH_NAME"
