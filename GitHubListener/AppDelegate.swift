@@ -202,7 +202,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSUserNotificationCent
                                 for commit in commits.reversed() {
                                     let testDate:Date = commit.description.author.date
                                     if (date != nil && date != testDate) {
-                                        self.showNotification(title: "\(repo.name)", subtitle: "\(commit.author.login) added commit", informativeText:  commit.description.message, image: commit.author.avatarUrl, url: commit.htmlUrl)
+                                        if (commit.description.verification.verified) {
+                                            self.showNotification(title: "\(repo.name)", subtitle: "\(commit.author.login) added commit", informativeText:  commit.description.message, image: commit.author.avatarUrl, url: commit.htmlUrl)
+                                        } else {
+                                            self.showNotification(title: "\(repo.name)", subtitle: "\(commit.description.author.name) added commit", informativeText:  commit.description.message, url: commit.htmlUrl)
+                                        }
                                     }
                                 }
                             }
@@ -526,7 +530,12 @@ struct Commit: Codable {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         let id = try container.decode(String.self, forKey: .id)
         let htmlUrl = try container.decode(String.self, forKey: .htmlUrl)
-        let author = try container.decode(User.self, forKey: .author)
+        var author:User = User(id: 0, login: "", avatarUrl: "")
+        do {
+            author = try container.decode(User.self, forKey: .author)
+        } catch {
+        
+        }
         let description = try container.decode(CommitDescription.self, forKey: .description)
         self.init(id: id, htmlUrl: htmlUrl, author: author, description: description)
     }
@@ -563,17 +572,20 @@ struct Commit: Codable {
         let message: String
         let commentCount: Int
         let author: CommitAuthor
+        let verification: Verification
 
         enum CodingKeys: String, CodingKey {
             case message
             case commentCount = "comment_count"
             case author
+            case verification
         }
 
-        init(message: String, commentCount: Int, author: CommitAuthor) {
+        init(message: String, commentCount: Int, author: CommitAuthor, verification: Verification) {
             self.message = message
             self.commentCount = commentCount
             self.author = author
+            self.verification = verification
         }
 
         init(from decoder: Decoder) throws {
@@ -581,7 +593,8 @@ struct Commit: Codable {
             let message = try container.decode(String.self, forKey: .message)
             let commentCount = try container.decode(Int.self, forKey: .commentCount)
             let author = try container.decode(CommitAuthor.self, forKey: .author)
-            self.init(message: message, commentCount: commentCount, author: author)
+            let verification = try container.decode(Verification.self, forKey: .verification)
+            self.init(message: message, commentCount: commentCount, author: author, verification: verification)
         }
 
         struct CommitAuthor: Codable {
@@ -607,6 +620,28 @@ struct Commit: Codable {
                 let email = try container.decode(String.self, forKey: .email)
                 let date = try container.decode(Date.self, forKey: .date)
                 self.init(name: name, email: email, date: date)
+            }
+        }
+        
+        struct Verification: Codable {
+            let verified: Bool
+            let reason: String
+            
+            enum CodingKeys: String, CodingKey {
+                case verified
+                case reason
+            }
+            
+            init(verified: Bool, reason: String) {
+                self.verified = verified
+                self.reason = reason
+            }
+            
+            init(from decoder: Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                let verified = try container.decode(Bool.self, forKey: .verified)
+                let reason = try container.decode(String.self, forKey: .reason)
+                self.init(verified: verified, reason: reason)
             }
         }
     }
