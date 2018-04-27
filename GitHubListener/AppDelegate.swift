@@ -203,7 +203,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSUserNotificationCent
                                 for commit in commits.reversed() {
                                     let testDate:Date = commit.description.author.date
                                     if (date != nil && date != testDate) {
-                                        self.showNotification(title: "\(repo.name)", subtitle: "\(commit.author.login) added commit", informativeText:  commit.description.message, image: commit.author.avatarUrl, url: commit.htmlUrl)
+                                        self.showNotification(title: "\(repo.fullName)", subtitle: "\(commit.author.login) added commit", informativeText:  commit.description.message, image: commit.author.avatarUrl, url: commit.htmlUrl)
                                     }
                                 }
                             }
