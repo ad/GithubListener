@@ -91,6 +91,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSUserNotificationCent
         case .contentsClicked:
             if let url = URL(string: notification.userInfo!["url"] as! String)  {
                 NSWorkspace.shared.open(url)
+                nc.removeDeliveredNotification(notification)
             }
         case .actionButtonClicked:
             notification.deliveryDate = Date(timeIntervalSinceNow: 60)
