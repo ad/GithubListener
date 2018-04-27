@@ -107,7 +107,7 @@ class NiblessWindowController: NSWindowController, WKNavigationDelegate {
 
                                     let appDelegate = NSApplication.shared.delegate as! AppDelegate
                                     appDelegate.accessToken = accessToken
-                                    appDelegate.username = login as! String
+                                    appDelegate.username = login as? String
                                     appDelegate.updateData()
                                     appDelegate.createMenu()
 //                                    print("access_token received", accessToken, "for user", login)

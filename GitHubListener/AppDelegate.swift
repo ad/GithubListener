@@ -77,11 +77,34 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSUserNotificationCent
     }
 
     func userNotificationCenter(_ center: NSUserNotificationCenter, didActivate notification: NSUserNotification) {
-        if let url = URL(string: notification.userInfo!["url"] as! String)  {
-            NSWorkspace.shared.open(url)
+        switch notification.activationType {
+        case .additionalActionClicked:
+            if notification.additionalActivationAction?.identifier == "snooze5min" {
+                notification.deliveryDate = Date(timeIntervalSinceNow: 300)
+                nc.scheduleNotification(notification)
+            } else if notification.additionalActivationAction?.identifier == "snooze1hour" {
+                notification.deliveryDate = Date(timeIntervalSinceNow: 3600)
+                nc.scheduleNotification(notification)
+            }
+        case .none:
+            break
+        case .contentsClicked:
+            if let url = URL(string: notification.userInfo!["url"] as! String)  {
+                NSWorkspace.shared.open(url)
+            }
+        case .actionButtonClicked:
+            notification.deliveryDate = Date(timeIntervalSinceNow: 60)
+            nc.scheduleNotification(notification)
+
+        case .replied:
+            break
         }
     }
 
+    func userNotificationCenter(_ center: NSUserNotificationCenter, shouldPresent notification: NSUserNotification) -> Bool {
+        return true
+    }
+    
     func createMenu() {
         let menu = NSMenu()
         if (self.username != nil) {
@@ -401,6 +424,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSUserNotificationCent
         notification.subtitle = subtitle
         notification.informativeText = informativeText
         notification.soundName = NSUserNotificationDefaultSoundName
+        // Warning: Private API
+        //notification.setValue(true, forKey: "_alwaysShowAlternateActionMenu") // show arrow for dropdown
+        notification.actionButtonTitle = "Later" // add ▼ to make it beautiful ^_^
+        notification.additionalActions = [
+            NSUserNotificationAction(identifier: "snooze5min", title: "5 min"),
+            NSUserNotificationAction(identifier: "snooze1hour", title: "1 hour")
+        ]
         if url != nil {
             notification.userInfo = ["url": url!]
         }
@@ -410,9 +440,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSUserNotificationCent
         nc.deliver(notification)
     }
 
-    func userNotificationCenter(_ center: NSUserNotificationCenter, shouldPresent notification: NSUserNotification) -> Bool {
-        return true
-    }
 }
 
 enum Result<Value> {

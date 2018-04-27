@@ -3,6 +3,8 @@
     <img src="https://discourse-cdn-sjc1.com/business6/uploads/highfidelity/3764/8618cb7af8406f6a.jpg">
 </p>
 
+[![GitHub release](https://img.shields.io/github/release/ad/GithubListener.svg)](https://github.com/ad/GithubListener/releases)
+
 # GithubListener
 Did you ever wanted to get notifications about new commits in repositories that you watch?  
 
