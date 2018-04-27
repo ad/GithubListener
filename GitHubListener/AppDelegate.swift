@@ -91,6 +91,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSUserNotificationCent
         case .contentsClicked:
             if let url = URL(string: notification.userInfo!["url"] as! String)  {
                 NSWorkspace.shared.open(url)
+                nc.removeDeliveredNotification(notification)
             }
         case .actionButtonClicked:
             notification.deliveryDate = Date(timeIntervalSinceNow: 60)
@@ -203,9 +204,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSUserNotificationCent
                                     let testDate:Date = commit.description.author.date
                                     if (date != nil && date != testDate) {
                                         if (commit.description.verification.verified) {
-                                            self.showNotification(title: "\(repo.name)", subtitle: "\(commit.author.login) added commit", informativeText:  commit.description.message, image: commit.author.avatarUrl, url: commit.htmlUrl)
+                                            self.showNotification(title: "\(repo.fullName)", subtitle: "\(commit.author.login) added commit", informativeText:  commit.description.message, image: commit.author.avatarUrl, url: commit.htmlUrl)
                                         } else {
-                                            self.showNotification(title: "\(repo.name)", subtitle: "\(commit.description.author.name) added commit", informativeText:  commit.description.message, url: commit.htmlUrl)
+                                            self.showNotification(title: "\(repo.fullName)", subtitle: "\(commit.description.author.name) added commit", informativeText:  commit.description.message, url: commit.htmlUrl)
                                         }
                                     }
                                 }
