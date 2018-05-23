@@ -52,7 +52,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSUserNotificationCent
         if let accessToken = self.defaults.string(forKey: "GHL.access_token") {
             self.accessToken = accessToken
 
-            print("access_token read", accessToken)
+//            print("access_token read", accessToken)
             if let username = self.defaults.string(forKey: "GHL.username") {
                 self.username = username
                 updateData()
@@ -204,9 +204,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSUserNotificationCent
                                     let testDate:Date = commit.description.author.date
                                     if (date != nil && date != testDate) {
                                         if (commit.description.verification.verified) {
-                                            self.showNotification(title: "\(repo.fullName)", subtitle: "\(commit.author.login) added commit", informativeText:  commit.description.message, image: commit.author.avatarUrl, url: commit.htmlUrl)
+                                            if self.username != commit.author.login { // TODO: make it customizable
+                                                self.showNotification(title: "\(repo.fullName)", subtitle: "\(commit.author.login) added commit", informativeText:  commit.description.message, image: commit.author.avatarUrl, url: commit.htmlUrl)
+                                            }
                                         } else {
-                                            self.showNotification(title: "\(repo.fullName)", subtitle: "\(commit.description.author.name) added commit", informativeText:  commit.description.message, url: commit.htmlUrl)
+                                            if self.username != commit.description.author.name { // TODO: make it customizable
+                                                self.showNotification(title: "\(repo.fullName)", subtitle: "\(commit.description.author.name) added commit", informativeText:  commit.description.message, url: commit.htmlUrl)
+                                            }
                                         }
                                     }
                                 }
