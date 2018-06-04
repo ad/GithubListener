@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		6074172F20C57FBA00BE13A1 /* LaunchAtLoginController.m in Sources */ = {isa = PBXBuildFile; fileRef = 6074172E20C57FBA00BE13A1 /* LaunchAtLoginController.m */; };
 		60911C57208F3CF20091BB6E /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60911C56208F3CF20091BB6E /* AppDelegate.swift */; };
 		60911C59208F3CF30091BB6E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 60911C58208F3CF30091BB6E /* Assets.xcassets */; };
 		60911C67208F733B0091BB6E /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60911C66208F733B0091BB6E /* main.swift */; };
@@ -14,6 +15,9 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		6074172C20C57FB900BE13A1 /* GitHubListener-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "GitHubListener-Bridging-Header.h"; sourceTree = "<group>"; };
+		6074172D20C57FBA00BE13A1 /* LaunchAtLoginController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LaunchAtLoginController.h; sourceTree = "<group>"; };
+		6074172E20C57FBA00BE13A1 /* LaunchAtLoginController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LaunchAtLoginController.m; sourceTree = "<group>"; };
 		60911C53208F3CF10091BB6E /* GitHubListener.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = GitHubListener.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		60911C56208F3CF20091BB6E /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		60911C58208F3CF30091BB6E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -53,12 +57,15 @@
 		60911C55208F3CF10091BB6E /* GitHubListener */ = {
 			isa = PBXGroup;
 			children = (
+				6074172D20C57FBA00BE13A1 /* LaunchAtLoginController.h */,
+				6074172E20C57FBA00BE13A1 /* LaunchAtLoginController.m */,
 				60911C56208F3CF20091BB6E /* AppDelegate.swift */,
 				60911C58208F3CF30091BB6E /* Assets.xcassets */,
 				60911C5D208F3CF30091BB6E /* Info.plist */,
 				60911C5E208F3CF30091BB6E /* GitHubListener.entitlements */,
 				60911C66208F733B0091BB6E /* main.swift */,
 				60E0AE6B20910FB5009491F3 /* NiblessWindowController.swift */,
+				6074172C20C57FB900BE13A1 /* GitHubListener-Bridging-Header.h */,
 			);
 			path = GitHubListener;
 			sourceTree = "<group>";
@@ -95,6 +102,7 @@
 				TargetAttributes = {
 					60911C52208F3CF10091BB6E = {
 						CreatedOnToolsVersion = 9.3;
+						LastSwiftMigration = 0940;
 						SystemCapabilities = {
 							com.apple.Sandbox = {
 								enabled = 1;
@@ -138,6 +146,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				60911C67208F733B0091BB6E /* main.swift in Sources */,
+				6074172F20C57FBA00BE13A1 /* LaunchAtLoginController.m in Sources */,
 				60911C57208F3CF20091BB6E /* AppDelegate.swift in Sources */,
 				60E0AE6C20910FB5009491F3 /* NiblessWindowController.swift in Sources */,
 			);
@@ -263,6 +272,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = GitHubListener/GitHubListener.entitlements;
 				CODE_SIGN_IDENTITY = "";
 				CODE_SIGN_STYLE = Manual;
@@ -276,6 +286,8 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.ad.ghl.GitHubListener;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
+				SWIFT_OBJC_BRIDGING_HEADER = "GitHubListener/GitHubListener-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 4.0;
 			};
 			name = Debug;
@@ -284,6 +296,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = GitHubListener/GitHubListener.entitlements;
 				CODE_SIGN_IDENTITY = "";
 				CODE_SIGN_STYLE = Manual;
@@ -297,6 +310,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.ad.ghl.GitHubListener;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
+				SWIFT_OBJC_BRIDGING_HEADER = "GitHubListener/GitHubListener-Bridging-Header.h";
 				SWIFT_VERSION = 4.0;
 			};
 			name = Release;

@@ -106,8 +106,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSUserNotificationCent
         return true
     }
     
+    @objc func toggleStartAtLogin(_ sender: Any?) {
+        LaunchAtLoginController().setLaunchAtLogin(!LaunchAtLoginController().launchAtLogin, for: NSURL.fileURL(withPath: Bundle.main.bundlePath))
+        createMenu()
+    }
+    
     func createMenu() {
         let menu = NSMenu()
+        
+        let startAtLogin = NSMenuItem(title: "Start at login", action: #selector(toggleStartAtLogin(_:)), keyEquivalent: "L")
+        if (LaunchAtLoginController().launchAtLogin) {
+            print("Program will launch on login")
+            startAtLogin.state = NSControl.StateValue.on
+        } else {
+            startAtLogin.state = NSControl.StateValue.off
+        }
+        menu.addItem(startAtLogin)
+        
         if (self.username != nil) {
             menu.addItem(withTitle: "Update \(self.username!)", action: #selector(updateData), keyEquivalent: "r")
             menu.addItem(NSMenuItem.separator())
