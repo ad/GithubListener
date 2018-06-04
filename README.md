@@ -1,7 +1,3 @@
-<p align="center">
-    <img src="GitHubListener/Assets.xcassets/AppIcon.appiconset/128.png" width="128" alt="GithubListener"><br/>  
-</p>
-
 [![GitHub release](https://img.shields.io/github/release/ad/GithubListener.svg)](https://github.com/ad/GithubListener/releases)
 
 # GithubListener
